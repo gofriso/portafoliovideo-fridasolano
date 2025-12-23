@@ -19,6 +19,7 @@
             background-color: var(--bg-color);
             font-family: var(--font-main);
             color: var(--text-color);
+            overflow-x: hidden;
         }
 
         .brand {
@@ -48,17 +49,16 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            object-fit: cover;
-            transition: transform 0.8s ease;
-            filter: brightness(0.8);
+            border: none;
+            pointer-events: none;
+            transform: scale(1.1); /* Ligero zoom para ocultar bordes de reproductores */
         }
 
-        /* Capa de desenfoque profesional para evitar el resplandor blanco */
         .blur-overlay {
             position: absolute;
             inset: 0;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             z-index: 5;
             transition: backdrop-filter 0.6s ease, opacity 0.6s ease;
         }
@@ -66,11 +66,6 @@
         .video-item:hover .blur-overlay {
             backdrop-filter: blur(0px);
             opacity: 0;
-        }
-
-        .video-item:hover .video-preview { 
-            transform: scale(1.05); 
-            filter: brightness(1);
         }
 
         .video-info {
@@ -81,7 +76,7 @@
         }
 
         .video-item:hover .video-info { opacity: 1; }
-        .video-info h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 5px; }
+        .video-info h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 5px; text-align: center; padding: 0 10px; }
         .video-info p { font-size: 0.65rem; color: #777; text-transform: uppercase; }
 
         #videoModal {
@@ -90,8 +85,8 @@
             align-items: center; justify-content: center; z-index: 2000;
         }
 
-        .modal-content { width: 90%; max-width: 1100px; position: relative; }
-        #fullVideo { width: 100%; display: block; }
+        .modal-content { width: 90%; max-width: 1100px; aspect-ratio: 16/9; position: relative; }
+        #modalIframe { width: 100%; height: 100%; border: none; }
         .close-btn { position: absolute; top: -50px; right: 0; color: white; font-size: 2.5rem; cursor: pointer; }
 
         footer { padding: 80px 20px; text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: #BBB; text-transform: uppercase; }
@@ -104,65 +99,74 @@
     <div class="brand">FRIDA SOLANO</div>
     <header><h1>Portfolio</h1></header>
 
-    <main class="video-grid">
-        <script>
-            const videosFrida = [
-                { file: 'animacion.mp4', thumb: 'img/portada-animacion.png', title: 'Animación', cat: 'Stop Motion' }, // <-- ACTUALIZADO
-                { file: 'cantoduo.mp4', thumb: 'img/portada-cantoduo.png', title: 'Canto Dúo', cat: 'Vocal' },
-                { file: 'cantoloveonthebrain.mp4', thumb: 'img/portada-cantoloveonthebrain.png', title: 'Love On The Brain', cat: 'Performance' },
-                { file: 'educativo.mp4', thumb: 'img/portada-educativo.png', title: 'Educativo', cat: 'E-learning' },
-                { file: 'emociones.mp4', thumb: 'img/portada-emociones.png', title: 'Emociones', cat: 'Concepto' },
-                { file: 'fotografasenlahistoria.mp4', thumb: 'img/portada-fotografasenlahistoria.png', title: 'Fotógrafas en la Historia', cat: 'Documental' },
-                { file: 'fototecahistorias.mp4', thumb: 'img/portada-fototecahistorias.png', title: 'Fototeca Historias', cat: 'Archivo' },
-                { file: 'montajes.mp4', thumb: 'img/portada-montajes.png', title: 'Montajes', cat: 'Edición' },
-                { file: 'regalovirtual.mp4', thumb: 'img/portada-regalovirtual.png', title: 'Regalo Virtual', cat: 'Interactivo' },
-                { file: 'tarjetadecumpleanos.mp4', thumb: 'img/portada-tarjetadecumpleanos.png', title: 'Tarjeta de Cumpleaños', cat: 'Diseño' },
-                { file: 'terror.mp4', thumb: 'img/portada-terror.png', title: 'Terror', cat: 'Cineminuto' },
-                { file: 'videomusical.mp4', thumb: 'img/portada-videomusical.png', title: 'Video Musical', cat: 'Producción' },
-                { file: 'vlog.mp4', thumb: 'img/portada-vlog.png', title: 'Vlog', cat: 'Lifestyle' }
-            ];
-
-            videosFrida.forEach(vid => {
-                document.write(`
-                    <div class="video-item" onclick="playFullVideo('videos/${vid.file}')">
-                        <video class="video-preview" poster="${vid.thumb}" muted loop playsinline 
-                               onmouseover="this.play()" onmouseout="this.pause(); this.load();">
-                            <source src="videos/${vid.file}" type="video/mp4">
-                        </video>
-                        <div class="blur-overlay"></div>
-                        <div class="video-info">
-                            <h3>${vid.title}</h3>
-                            <p>${vid.cat}</p>
-                        </div>
-                    </div>
-                `);
-            });
-        </script>
-    </main>
+    <main class="video-grid" id="mainGrid"></main>
 
     <div id="videoModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <video id="fullVideo" controls playsinline><source src="" type="video/mp4"></video>
+            <iframe id="modalIframe" allow="autoplay; fullscreen" allowfullscreen></iframe>
         </div>
     </div>
 
     <footer>&copy; 2024 Frida Solano. Portafolio Audiovisual.</footer>
 
     <script>
-        const modal = document.getElementById('videoModal');
-        const fullVideo = document.getElementById('fullVideo');
-        function playFullVideo(src) {
-            fullVideo.src = src;
+        const videosFrida = [
+            { type: 'youtube', id: 'aCKTjaszaps', title: 'Animación', cat: 'Stop Motion' },
+            { type: 'vimeo', id: '1149035204', title: 'Canto Dúo', cat: 'Vocal' },
+            { type: 'vimeo', id: '1149035325', title: 'Love On The Brain', cat: 'Performance' },
+            { type: 'vimeo', id: '1149035476', title: 'Educativo', cat: 'E-learning' },
+            { type: 'vimeo', id: '1149035493', title: 'Emociones', cat: 'Concepto' },
+            { type: 'youtube', id: 'wgjcW2ZtWrs', title: 'Fotógrafas en la Historia', cat: 'Documental' },
+            { type: 'vimeo', id: '1149036318', title: 'Fototeca Historias', cat: 'Archivo' },
+            { type: 'youtube', id: 'RNVZe_0LRhY', title: 'Montaje', cat: 'Edición' },
+            { type: 'vimeo', id: '1149036356', title: 'Regalo Virtual', cat: 'Interactivo' },
+            { type: 'vimeo', id: '1149036790', title: 'Tarjeta de Cumpleaños', cat: 'Diseño' },
+            { type: 'youtube', id: 'ogZKWjIwGQI', title: 'Video Musical', cat: 'Producción' },
+            { type: 'youtube', id: 'njDl3qsLmtE', title: 'Vlog', cat: 'Lifestyle' },
+            { type: 'youtube', id: 'GjuBf4cQgD0', title: 'Terror', cat: 'Cineminuto' }
+        ];
+
+        const grid = document.getElementById('mainGrid');
+
+        videosFrida.forEach(vid => {
+            let embedUrl = vid.type === 'youtube' 
+                ? `https://www.youtube.com/embed/${vid.id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${vid.id}&rel=0`
+                : `https://player.vimeo.com/video/${vid.id}?autoplay=1&muted=1&background=1&loop=1`;
+
+            const item = document.createElement('div');
+            item.className = 'video-item';
+            item.onclick = () => openModal(vid.type, vid.id);
+            item.innerHTML = `
+                <iframe class="video-preview" src="${embedUrl}" allow="autoplay; fullscreen"></iframe>
+                <div class="blur-overlay"></div>
+                <div class="video-info">
+                    <h3>${vid.title}</h3>
+                    <p>${vid.cat}</p>
+                </div>
+            `;
+            grid.appendChild(item);
+        });
+
+        function openModal(type, id) {
+            const modal = document.getElementById('videoModal');
+            const iframe = document.getElementById('modalIframe');
+            let finalUrl = type === 'youtube'
+                ? `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0`
+                : `https://player.vimeo.com/video/${id}?autoplay=1`;
+            
+            iframe.src = finalUrl;
             modal.style.display = 'flex';
-            fullVideo.play();
         }
+
         function closeModal() {
-            modal.style.display = 'none';
-            fullVideo.pause();
-            fullVideo.src = "";
+            document.getElementById('videoModal').style.display = 'none';
+            document.getElementById('modalIframe').src = "";
         }
-        window.onclick = function(event) { if (event.target == modal) { closeModal(); } }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('videoModal')) { closeModal(); }
+        }
     </script>
 </body>
 </html>
