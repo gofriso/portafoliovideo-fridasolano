@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frida Solano | Portafolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #FFFFFF;
+            --text-color: #1A1A1A;
+            --font-main: 'Avenir Next', 'Avenir', 'Montserrat', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; list-style: none; }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            color: var(--text-color);
+        }
+
+        .brand {
+            padding: 80px 20px 20px;
+            font-weight: 500; letter-spacing: 8px;
+            text-transform: uppercase; font-size: 1.2rem; text-align: center;
+        }
+
+        header { padding: 20px 20px 60px; text-align: center; }
+        header h1 { font-size: 1rem; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; color: #999; }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px; padding: 20px; max-width: 1800px; margin: 0 auto;
+        }
+
+        .video-item {
+            position: relative; 
+            background: #000;
+            aspect-ratio: 16 / 9; 
+            overflow: hidden; 
+            cursor: pointer;
+        }
+
+        .video-preview {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+            filter: brightness(0.8);
+        }
+
+        /* Capa de desenfoque profesional para evitar el resplandor blanco */
+        .blur-overlay {
+            position: absolute;
+            inset: 0;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 5;
+            transition: backdrop-filter 0.6s ease, opacity 0.6s ease;
+        }
+
+        .video-item:hover .blur-overlay {
+            backdrop-filter: blur(0px);
+            opacity: 0;
+        }
+
+        .video-item:hover .video-preview { 
+            transform: scale(1.05); 
+            filter: brightness(1);
+        }
+
+        .video-info {
+            position: absolute; inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.4s ease; z-index: 10;
+        }
+
+        .video-item:hover .video-info { opacity: 1; }
+        .video-info h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 5px; }
+        .video-info p { font-size: 0.65rem; color: #777; text-transform: uppercase; }
+
+        #videoModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); display: none;
+            align-items: center; justify-content: center; z-index: 2000;
+        }
+
+        .modal-content { width: 90%; max-width: 1100px; position: relative; }
+        #fullVideo { width: 100%; display: block; }
+        .close-btn { position: absolute; top: -50px; right: 0; color: white; font-size: 2.5rem; cursor: pointer; }
+
+        footer { padding: 80px 20px; text-align: center; font-size: 0.7rem; letter-spacing: 2px; color: #BBB; text-transform: uppercase; }
+
+        @media (max-width: 768px) { .video-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="brand">FRIDA SOLANO</div>
+    <header><h1>Portfolio</h1></header>
+
+    <main class="video-grid">
+        <script>
+            const videosFrida = [
+                { file: 'animacion.mp4', thumb: 'img/portada-animacion.png', title: 'Animación', cat: 'Stop Motion' }, // <-- ACTUALIZADO
+                { file: 'cantoduo.mp4', thumb: 'img/portada-cantoduo.png', title: 'Canto Dúo', cat: 'Vocal' },
+                { file: 'cantoloveonthebrain.mp4', thumb: 'img/portada-cantoloveonthebrain.png', title: 'Love On The Brain', cat: 'Performance' },
+                { file: 'educativo.mp4', thumb: 'img/portada-educativo.png', title: 'Educativo', cat: 'E-learning' },
+                { file: 'emociones.mp4', thumb: 'img/portada-emociones.png', title: 'Emociones', cat: 'Concepto' },
+                { file: 'fotografasenlahistoria.mp4', thumb: 'img/portada-fotografasenlahistoria.png', title: 'Fotógrafas en la Historia', cat: 'Documental' },
+                { file: 'fototecahistorias.mp4', thumb: 'img/portada-fototecahistorias.png', title: 'Fototeca Historias', cat: 'Archivo' },
+                { file: 'montajes.mp4', thumb: 'img/portada-montajes.png', title: 'Montajes', cat: 'Edición' },
+                { file: 'regalovirtual.mp4', thumb: 'img/portada-regalovirtual.png', title: 'Regalo Virtual', cat: 'Interactivo' },
+                { file: 'tarjetadecumpleanos.mp4', thumb: 'img/portada-tarjetadecumpleanos.png', title: 'Tarjeta de Cumpleaños', cat: 'Diseño' },
+                { file: 'terror.mp4', thumb: 'img/portada-terror.png', title: 'Terror', cat: 'Cineminuto' },
+                { file: 'videomusical.mp4', thumb: 'img/portada-videomusical.png', title: 'Video Musical', cat: 'Producción' },
+                { file: 'vlog.mp4', thumb: 'img/portada-vlog.png', title: 'Vlog', cat: 'Lifestyle' }
+            ];
+
+            videosFrida.forEach(vid => {
+                document.write(`
+                    <div class="video-item" onclick="playFullVideo('videos/${vid.file}')">
+                        <video class="video-preview" poster="${vid.thumb}" muted loop playsinline 
+                               onmouseover="this.play()" onmouseout="this.pause(); this.load();">
+                            <source src="videos/${vid.file}" type="video/mp4">
+                        </video>
+                        <div class="blur-overlay"></div>
+                        <div class="video-info">
+                            <h3>${vid.title}</h3>
+                            <p>${vid.cat}</p>
+                        </div>
+                    </div>
+                `);
+            });
+        </script>
+    </main>
+
+    <div id="videoModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <video id="fullVideo" controls playsinline><source src="" type="video/mp4"></video>
+        </div>
+    </div>
+
+    <footer>&copy; 2024 Frida Solano. Portafolio Audiovisual.</footer>
+
+    <script>
+        const modal = document.getElementById('videoModal');
+        const fullVideo = document.getElementById('fullVideo');
+        function playFullVideo(src) {
+            fullVideo.src = src;
+            modal.style.display = 'flex';
+            fullVideo.play();
+        }
+        function closeModal() {
+            modal.style.display = 'none';
+            fullVideo.pause();
+            fullVideo.src = "";
+        }
+        window.onclick = function(event) { if (event.target == modal) { closeModal(); } }
+    </script>
+</body>
+</html>
